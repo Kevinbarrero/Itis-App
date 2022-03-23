@@ -1,0 +1,31 @@
+name: CD
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  build_and_serve:
+    runs-on: ubuntu-latest
+    concurrency: build_and_serve
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Node.js 16.x
+        uses: actions/setup-node@v2
+        with:
+          node-version: 16.x
+          cache: 'yarn'
+      - name: Install dependensies
+        run: yarn --frozen-lockfile --production
+      - name: building
+        run: yarn build
+        env:
+          REACT_APP_API_URL: https://itis-task-tracker-be.herokuapp.com
+          PUBLIC_URL: /itis-frontend-app
+          REACT_APP_HASH_ROUTER: true
+      - name: deploy
+        run: |
+          git remote set-url origin https://git:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+          npx gh-pages -d build -u "github-actions-bot <support+actions@github.com>"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
